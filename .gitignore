@@ -10,7 +10,6 @@ config.py
 __pycache__/
 
 node_modules
-dist
 dist-ssr
 *.local
 
