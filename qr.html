@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Scanner</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        #main {
+            background-color: var(--tg-theme-bg-color, white);
+            color: var(--tg-theme-text-color, black);
+            word-wrap: break-word;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="main">
+    <div id="qr-result"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const webapp = window.Telegram.WebApp;
+            webapp.expand();
+            webapp.ready();
+
+            // QR kod o'qilganda ishlaydi
+            webapp.onEvent('qrTextReceived', function (data) {
+                if (data && data.data) {
+                    // QR koddan o'qilgan ma'lumotni botga yuborish
+                    webapp.sendData(JSON.stringify(data.data));
+                    const decoded = atob(data.data);
+                    const payload = JSON.parse(decoded);
+
+                    // Natijani ko'rsatish (ixtiyoriy)
+                    document.getElementById('qr-result').innerHTML =
+                        `<p>O'qilgan ma'lumot: ${JSON.stringify(payload)}</p>`;
+
+                    // User confirmation and base64 decode before sending data
+                    if (confirm(`Olingan ma'lumotni tasdiqlaysizmi?\n${JSON.stringify(payload)}`)) {
+                        try {
+                            // fetch("https://tg-apps-dev.click.uz/qr-check", {
+                            fetch("https://soundbox.click.uz/api/v1/device/create/", {
+                                method: "POST",
+                                headers: {
+                                    "Authorization": "Token 01d089cwew27307cb5c9a06cafe3a818b1a1b9c64cb",
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(payload)
+                            })
+                                .then(response => response.json())
+                                .then(result => {
+                                    if (result.result === 1) {
+                                        alert("Yangi qurilmaga ro'yxatdan o'tildi!");
+                                    } else if (result.result === 2) {
+                                        alert("Avval aktivlashgan!");
+                                    } else {
+                                        alert("Xatolik yuz berdi. Qaytadan urinib ko'ring!");
+                                    }
+                                })
+                                .catch(error => {
+                                    alert("Tarmoqda xatolik yuz berdi: " + error.message);
+                                });
+                        } catch (error) {
+                            alert("Xatolik: Ma'lumotni qayta ishlash imkoni bo'lmadi.");
+                        }
+                    }
+
+                    // QR scanner ni yopish
+                    // webapp.closeScanQrPopup();
+                    // webapp.close();
+                }
+            });
+
+            // QR scanner ni ochish
+            setTimeout(() => {
+                webapp.showScanQrPopup({
+                    text: "QR kodni skanerlash"
+                });
+            }, 500);
+
+        } catch (e) {
+            document.getElementById('main').innerHTML +=
+                '<p>Error: ' + e.message + '</p>';
+        }
+    });
+</script>
+</body>
+</html>
